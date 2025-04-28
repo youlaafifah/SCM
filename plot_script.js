@@ -2603,6 +2603,20 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         const position = constellationLabels[selectedLabel] || constellationMidpoints[selectedLabel];
         const number = position.labelnumber || position.starnumber;
         
+        const targetID = `CON ${folderName} ${number}`;
+        const existingEntry = constellationsList.findIndex(m=>m.id === targetID);
+        if(existingEntry>-1){
+            constellationsList[existingEntry].image = {
+                file: picture,
+                size: [actualwidth, actualheight],
+                anchors: [
+                    {pos: `${parseFloat(pixelCoordinates[0].split(' ')[0])}, ${parseFloat(pixelCoordinates[0].split(' ')[1])}`, hip: `${selectedStarNames[0]}` },
+                    {pos: `${parseFloat(pixelCoordinates[1].split(' ')[0])}, ${parseFloat(pixelCoordinates[1].split(' ')[1])}`, hip: `${selectedStarNames[1]}` },
+                    {pos: `${parseFloat(pixelCoordinates[2].split(' ')[0])}, ${parseFloat(pixelCoordinates[2].split(' ')[1])}`, hip: `${selectedStarNames[2]}` },
+                ]
+            };
+        };
+
         const coordContent = `${number} ${picture} ${pixelCoordinates[0]} ${selectedStarNames[0]} ${pixelCoordinates[1]} ${selectedStarNames[1]} ${pixelCoordinates[2]} ${selectedStarNames[2]}`;
         if (!coordTab) {
             coordTab = window.open();
