@@ -91,6 +91,8 @@ html_content = f"""
         <img id="overlay-artwork" src="" alt="Overlay-Artwork" style="position: absolute; display: none;">
         </div>
     </div>
+    <div id="overlay-map"></div>
+    
 
     <div id="label-input" role="dialog" aria-labelledby="Asterism Names" aria-modal="true">
         <label for="english">English Name: </label>

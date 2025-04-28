@@ -89,17 +89,17 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     var lines = [];
     var drawing_enabled = false;
     var stickFigure =[];
-    var traceIndices =[]; // To track the trace indice
+    var traceIndices =[]; 
 
-    var newstickFigure = []; // track new stickFigure from openfolder
+    var newstickFigure = []; 
     var newtraceIndices = [];
 
     let hullTraceIndice = [];
 
-    let selectedLineIndex = null; // To track the selected line index
-    let previousSelectedLineIndex = null // To track previously selected line index
+    let selectedLineIndex = null; 
+    let previousSelectedLineIndex = null;
 
-    let chosenFolderHandle = null; // variable to store the folder handle selected in openfolder
+    let chosenFolderHandle = null; 
     let saveAsTab = null; 
     let labelTab = null; 
     let avgTab = null; 
@@ -123,9 +123,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         }
 
         regionDroplist();
-        console.log("regionDroplist() called");
         classificationDroplist();
-        console.log("classificationDroplist() called");
 
         const edgesFileHandle = await chosenFolderHandle.getFileHandle('Vertex.fab');
         const edgesFile = await edgesFileHandle.getFile();
@@ -254,6 +252,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
 
     });
 
+    //  REGION DROPLIST
     let regionName = '';
     const regionToCountry = {
         'Northern Africa' : ['Algeria', 'Egypt', 'Libya', 'Morocco', 'Sudan', 'Tunisia', 'Western Sahara'],
@@ -389,6 +388,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         });
     }
     
+    // CLASSIFICATION DROPLIST
     let classificationName = '';
 
     function classificationDroplist() {
@@ -407,15 +407,15 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             const optionClassification = document.createElement('option');
             optionClassification.value = classification.name;
             optionClassification.textContent = classification.name;
-            optionClassification.title = classification.info; // Set the title attribute to the value
+            optionClassification.title = classification.info;
             classificationDropMenu.appendChild(optionClassification);
         });
-        classificationDropMenu.style.display = 'block'; // Show the dropdown menu
+        classificationDropMenu.style.display = 'block';
         classificationDropMenu.addEventListener('change', function() {
             classificationName = this.value.trim();
-            classificationDropMenu.style.display = 'none'; // Hide the dropdown menu
-            document.getElementById('regionDropdown').style.display = 'none'; // Hide the region dropdown menu
-            document.getElementById('regionSearch').style.display = 'none';
+//            classificationDropMenu.style.display = 'none'; // Hide the dropdown menu
+//            document.getElementById('regionDropdown').style.display = 'none'; // Hide the region dropdown menu
+//            document.getElementById('regionSearch').style.display = 'none';
 
         });
     }
@@ -493,8 +493,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     const editStarTwo = document.getElementById('editstar-2');
     const editStarThree = document.getElementById('editstar-3');
 
-    let selectHIP = [];
-    let selectHIPName = [];
 
     let lastPoint = null;
     
@@ -760,9 +758,9 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     document.getElementById('Add-DSO-Manual').addEventListener('click', function(){
         showInput('Deep Sky Object');
     });
+    let currentDSOInputIndex = 0;
     function showInput(AddingManual) {
         const container = document.getElementById('manual-input-container');
-        //container.innerHTML = '';
         const MultiplyInput = document.createElement('div');
         MultiplyInput.className = 'multiply-input';
         MultiplyInput.setAttribute('data-AddingManual', AddingManual);
@@ -775,8 +773,36 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             const objectInput = document.createElement('input');
             objectInput.type =  'text';
             objectInput.id = `inputStarManual - ${currentStarInputIndex}`;
-            objectInput.placeholder = 'Click the Star or Insert the star HIP number';
+            objectInput.placeholder = 'Click the Star or Insert the star Name';
             MultiplyInput.appendChild(objectInput);
+
+            const objectButton = document.createElement('button');
+            objectButton.type = 'button';
+            objectButton.className = 'verifyStarButton';
+            objectButton.textContent = 'Verify';
+            const ButtonIcon = document.createElement('span');
+            ButtonIcon.className = 'iconify';
+            objectButton.appendChild(ButtonIcon);
+
+            objectInput.addEventListener('input', function() {
+                ButtonIcon.textContent = '🔍';
+            });
+
+            objectButton.addEventListener('click', async () => {
+                const thisInput = objectInput.value.trim();
+                const result = await getSesameResult(thisInput);
+                const searchingfor = /<alias>HIP\s\d+<\/alias>/i;
+                if (searchingfor.test(result)) {
+                    ButtonIcon.textContent = '✅';
+                    const match = result.match(searchingfor);
+                    const hipNumber = match[0].replace(/<\/?alias>/g, '').replace('HIP ', '');
+                    objectInput.value = `HIP ${hipNumber}`;
+                } else if (result.includes("<INFO> *** NNNothing found *** </INFO>")) {
+                    ButtonIcon.textContent = '❌';
+                    alert("No star found. Please check the name or try again.");
+                }
+            });
+            MultiplyInput.appendChild(objectButton);
             MultiplyInput.appendChild(document.createElement('br'));
 
             const englishLabel = document.createElement('label');
@@ -914,15 +940,42 @@ function initializePlot(lon, lat, text, size, ra, mag) {
 
         } else if(AddingManual === 'Deep Sky Object') {
 
+            const dsoIndex = currentDSOInputIndex++;
+
             const objectLabel = document.createElement('label');
             objectLabel.setAttribute('for', 'inputDSOManual');
             objectLabel.textContent = 'Deep Sky Object:';
             MultiplyInput.appendChild(objectLabel);
+
             const objectInput = document.createElement('input');
             objectInput.type =  'text';
-            objectInput.id = 'inputDSOManual';
+            objectInput.id = `inputDSOManual - ${dsoIndex}`;
             objectInput.placeholder = 'Insert the Deep Sky Object Name';
             MultiplyInput.appendChild(objectInput);
+
+            const objectButton = document.createElement('button');
+            objectButton.type = 'button';
+            objectButton.className = 'verifyDSOButton';
+            objectButton.textContent = 'Verify';
+
+            const ButtonIcon = document.createElement('span');
+            ButtonIcon.className = 'iconify';
+            objectButton.appendChild(ButtonIcon);
+
+            objectInput.addEventListener('input', function() {
+                ButtonIcon.textContent = '🔍';
+            });
+
+            objectButton.addEventListener('click', async () => {
+                const thisInput = objectInput.value.trim(); 
+                const result = await getSesameResult(thisInput);
+                if(result.includes("<INFO> *** NNNothing found *** </INFO>")) {
+                    ButtonIcon.textContent = '❌';
+                } else {
+                    ButtonIcon.textContent = '✅';
+                }
+            });
+            MultiplyInput.appendChild(objectButton);
             MultiplyInput.appendChild(document.createElement('br'));
 
             const englishLabel = document.createElement('label');
@@ -990,6 +1043,29 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             inputWidth.style.width = `${45}ch`;
         });
     }
+
+    async function getSesameResult(inputCNManual) {
+        const baseUrl = 'http://cds.unistra.fr/cgi-bin/nph-sesame/-oIfx?';
+        const encodedName = encodeURIComponent(inputCNManual);
+        try {
+            const response = await fetch(`${baseUrl}${encodedName}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/plain'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.text();
+            return data;
+        } catch (error) {
+            console.error('Fetch error:', error);
+            return `Error fetching data: ${error.message}`;
+        }
+    }
+
+
 
     const commonNames = {};
 
@@ -1061,7 +1137,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         let insideR1 = false;
 
         //-----------------------ROUTINE ONE --------------------------
-        //ROUTINE 1 : membaca sisi KANAN HIP besar = membaca original polygon
+        //ROUTINE 1 : Read the right side (big HIP number) = Read the original polygon
         let p1 = polygon[0];
         for (let i = 1; i <= num_vertices; i++) {
             p2 = polygon[i % num_vertices];
@@ -1115,7 +1191,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     }
     
 
-    //This function is using Andrew's monotone chain algorithm, Graham Scan algorithm
+    //This function is using Andrew's monotone chain algorithm
     function convexHull(points) {
         const start = points.reduce((lowest,p) => {
             return (p.y < lowest.y || (p.y === lowest.y && p.x < lowest.x)) ? p : lowest;
@@ -1181,250 +1257,9 @@ function initializePlot(lon, lat, text, size, ra, mag) {
 
     }
     
-    let SaveAsCount = 0;
-
-
     function formatNum(num) {
         return num.toString().padStart(3,'0');
     }
-
-    let nomor = 0;
-    document.getElementById('save-as').addEventListener('click', function(){
-        if(stickFigure.length === 0) return;
-
-        nomor = `${formatNum(++SaveAsCount)}`;
-
-        const modi = JSON.parse(JSON.stringify(stickFigure));
-        console.log("FIRST modi", modi);
-        let minLong = Infinity;
-        let maxLong = -Infinity;
-
-        let hasLonRange1 = false; // -360<=x<=-270
-        let hasLonRange2 = false; // -90<=x<=0 
-
-        for (let i = 0; i < modi.length; i++) {
-            for (let j = 0; j < modi[i].length; j++){
-                let long = modi[i][j].x;
-                if (long < minLong) minLong = long;
-                if (long > maxLong) maxLong = long;
-
-                if(long >= -360 && long <= -270) {
-                    hasLonRange1 = true;
-                }
-                if(long >= -90 && long <= 0) {
-                    hasLonRange2 = true;
-                }
-            }
-        }
-        if(hasLonRange1 && hasLonRange2) {
-            for (let i = 0; i < modi.length; i++) {
-                for (let j = 0; j < modi[i].length; j++) {
-                    let long = modi[i][j].x;
-                    if (long >= -180 && long <= 0) {
-                        long += -360;
-                    }
-                    modi[i][j].x = long;
-                }
-            }
-            console.log("SECOND modi", modi);
-        }
-/*        if(maxLong <= 0 && minLong >= -360){
-            const longDiff = minLong - maxLong;
-            for (let i = 0; i < modi.length; i++){
-                for (let j = 0; j < modi[i].length; j++) {
-                    let long = modi[i][j].x;
-                    if (longDiff < -180 && long > -180) {
-                        long += -360;
-                    }
-                    modi[i][j].x = long;
-                }
-            }
-            console.log("SECOND modi", modi);
-        }*/
-//Batasnya
-        const allPoints = modi.flat(); 
-        console.log("allPoints", allPoints);
-        const hull = convexHull(allPoints);
-        console.log("hull", hull);
-        const polygon = hull;
-        const vertexHIPs = [];
-        
-        for (let i = 0; i < hull.length; i++) {
-            const vertexPoint = hull[i];
-            let adjustedLongitude = vertexPoint.x;
-            if (vertexPoint.x < -360) {
-                adjustedLongitude += 360;
-            }
-            const hip = text.find((hip, index) => {
-                return Math.abs(lon[index] - adjustedLongitude) < 1e-6 && Math.abs(lat[index] - vertexPoint.y) < 1e-6;
-            });
-            if (hip) {
-                vertexHIPs.push(hip.trim());
-            }            
-        }
-
-        const vertexesContent = `${nomor} ${vertexHIPs}`;
-
-        if(!vertexesTab) {
-            vertexesTab = window.open();
-            vertexesTab.document.write(`
-                <html>
-                    <head>
-                        <title>Vertexes HIP</title>
-                    </head>
-                    <body>
-                        <pre>${vertexesContent}</pre>
-                        <script>
-                            window.addEventListener('beforeunload', (event) => {
-                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
-                                event.returnValue = confirmationMessage; // For most browsers
-                                return confirmationMessage; // For some browsers
-                            });
-                        <\/script>
-                    </body>
-                </html>
-                `);
-//            vertexesTab.document.write('<pre>' + vertexesContent + '</pre>');
-//            vertexesTab.document.title = 'Vertexes HIP';
-            vertexesTab.document.close();
-        } else {
-            vertexesTab.document.querySelector('pre').innerHTML += '\n' + vertexesContent;//vertexesTab.document.body.innerHTML +='<pre>' + vertexesContent + '</pre>';
-        }
-
-        //wholePoints is the data from csv
-        const wholePoints = lon.map((lon,index) => {
-            return {x:lon, y:lat[index]};
-        });
-        const pointsWithinHull = getPointsWithinHull(wholePoints,hull);
-
-        const pointsInsideHull = [];
-
-        //Find the point from sub-catalog inside the convexhull
-        pointsWithinHull.forEach(pointWithinHull => {
-            const isInside = stars_inside_hull_normal(polygon,pointWithinHull);
-            if(isInside) {
-                console.log(`The point (${pointWithinHull.x}, ${pointWithinHull.y}) is inside the polygon.`);
-                pointsInsideHull.push(pointWithinHull);
-            } else {
-                console.log(`The point (${pointWithinHull.x}, ${pointWithinHull.y}) is outside the polygon.`);
-            }
-        });
-
-        const starsInsideHull = [];
-
-        // Find the second routine
-        pointsWithinHull.forEach(mirror => {
-            const isInside2 = stars_inside_hull_abnormal(hull,mirror);
-            if(isInside2) {
-                console.log(`The point (${mirror.x}, ${mirror.y}) is inside the polygon.`);
-                starsInsideHull.push(mirror);
-            } else {
-                console.log(`The point (${mirror.x}, ${mirror.y}) is inside the polygon.`)
-            }
-        });
-      
-        const insideHIPs = [];
-        
-        for (let i = 0; i < pointsInsideHull.length; i++) {
-            const insidePoint = pointsInsideHull[i];
-            const hip = text.find((hip, index) => {
-                return Math.abs(lon[index] - insidePoint.x) < 1e-6 && Math.abs(lat[index] - insidePoint.y) < 1e-6;
-            });
-            if (hip) {
-                insideHIPs.push(hip.trim());
-            }
-
-        }
-
-        const insidemirror = [];
-        
-        for (let i = 0; i < starsInsideHull.length; i++) {
-            const insidePoint = starsInsideHull[i];
-            const hip = text.find((hip, index) => {
-                return Math.abs(lon[index] - insidePoint.x) < 1e-6 && Math.abs(lat[index] - insidePoint.y) < 1e-6;
-            });
-            if (hip) {
-                insidemirror.push(hip.trim());
-            }
-        }
-        if(insidemirror.length > 0 && insideHIPs.length > 0) {
-            insidemirror[0] = ','+insidemirror[0];
-        } else {
-            insidemirror[0];
-        }
-
-        const insideContent = `${nomor} ${insideHIPs}${insidemirror}`;
-
-        if(!insideTab) {
-            insideTab = window.open();
-            insideTab.document.write(`
-                <html>
-                    <head>
-                        <title>Inside Hull</title>
-                    </head>
-                    <body>
-                        <pre>${insideContent}</pre>
-                        <script>
-                            window.addEventListener('beforeunload', (event) => {
-                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
-                                event.returnValue = confirmationMessage; // For most browsers
-                                return confirmationMessage; // For some browsers
-                            });
-                        <\/script>
-                    </body>
-                </html>
-                `);
-//            insideTab.document.write('<pre>' + insideContent + '</pre>');
-//            insideTab.document.title = 'Inside Hull HIP';
-            insideTab.document.close();
-        } else {
-            insideTab.document.querySelector('pre').innerHTML += '\n' + insideContent;//insideTab.document.body.innerHTML +='<pre>' + insideContent + '</pre>';
-        }
-        console.log("stickFigure", stickFigure);
-        
-        fileContents = stickFigure.map((line,index) => {
-            const hips = new Set(line.map(point => {
-                return text.find((hip, i) => {
-                    const lon = lon_array[i];
-                    const lat = lat_array[i];
-                    return Math.abs(lon - point.x) < 1e-6 && Math.abs(lat - point.y) < 1e-6;
-                });
-            }).filter(Boolean));
-            return `[${[...hips].map(hip=>hip.replace('HIP','').trim()).join(', ')}]`.trim(); //Remove the term "HIP"
-        }).join(', ');
-
-
-
-        const saveAsContent = `${nomor} ${stickFigure.length} ${fileContents}`;
-        if (!saveAsTab) {
-            saveAsTab = window.open();
-            saveAsTab.document.write(`
-                <html>
-                    <head>
-                        <title>Asterisms' HIP</title>
-                    </head>
-                    <body>
-                        <pre>${saveAsContent}</pre>
-                        <script>
-                            window.addEventListener('beforeunload', (event) => {
-                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
-                                event.returnValue = confirmationMessage; // For most browsers
-                                return confirmationMessage; // For some browsers
-                            });
-                        <\/script>
-                    </body>
-                </html>
-                `);
-//            saveAsTab.document.write('<pre>' + saveAsContent + '</pre>');
-//            saveAsTab.document.title = "Asterisms' HIP";
-            saveAsTab.document.close();
-        } else {
-            saveAsTab.document.querySelector('pre').innerHTML += '\n' + saveAsContent;//saveAsTab.document.body.innerHTML +='<pre>' + saveAsContent + '</pre>';
-        }       
-        stickFigure = [];
-        lastPoint = null;
-    });
-
 
     
     let LabelCount = 0;
@@ -1647,7 +1482,260 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     });
 
 
-    let dataset = {
+    let SaveAsCount = 0;
+    const constellationsList = [];
+    let nomor = 0;
+    
+    document.getElementById('save-as').addEventListener('click', function(){
+        if(stickFigure.length === 0) return;
+
+        nomor = `${formatNum(++SaveAsCount)}`;
+
+        const modi = JSON.parse(JSON.stringify(stickFigure));
+        console.log("FIRST modi", modi);
+        let minLong = Infinity;
+        let maxLong = -Infinity;
+
+        let hasLonRange1 = false; // -360<=x<=-270
+        let hasLonRange2 = false; // -90<=x<=0 
+
+        for (let i = 0; i < modi.length; i++) {
+            for (let j = 0; j < modi[i].length; j++){
+                let long = modi[i][j].x;
+                if (long < minLong) minLong = long;
+                if (long > maxLong) maxLong = long;
+
+                if(long >= -360 && long <= -270) {
+                    hasLonRange1 = true;
+                }
+                if(long >= -90 && long <= 0) {
+                    hasLonRange2 = true;
+                }
+            }
+        }
+        if(hasLonRange1 && hasLonRange2) {
+            for (let i = 0; i < modi.length; i++) {
+                for (let j = 0; j < modi[i].length; j++) {
+                    let long = modi[i][j].x;
+                    if (long >= -180 && long <= 0) {
+                        long += -360;
+                    }
+                    modi[i][j].x = long;
+                }
+            }
+            console.log("SECOND modi", modi);
+        }
+/*        if(maxLong <= 0 && minLong >= -360){
+            const longDiff = minLong - maxLong;
+            for (let i = 0; i < modi.length; i++){
+                for (let j = 0; j < modi[i].length; j++) {
+                    let long = modi[i][j].x;
+                    if (longDiff < -180 && long > -180) {
+                        long += -360;
+                    }
+                    modi[i][j].x = long;
+                }
+            }
+            console.log("SECOND modi", modi);
+        }*/
+//Batasnya
+        const allPoints = modi.flat(); 
+        console.log("allPoints", allPoints);
+        const hull = convexHull(allPoints);
+        console.log("hull", hull);
+        const polygon = hull;
+        const vertexHIPs = [];
+        
+        for (let i = 0; i < hull.length; i++) {
+            const vertexPoint = hull[i];
+            let adjustedLongitude = vertexPoint.x;
+            if (vertexPoint.x < -360) {
+                adjustedLongitude += 360;
+            }
+            const hip = text.find((hip, index) => {
+                return Math.abs(lon[index] - adjustedLongitude) < 1e-6 && Math.abs(lat[index] - vertexPoint.y) < 1e-6;
+            });
+            if (hip) {
+                vertexHIPs.push(hip.trim());
+            }            
+        }
+
+        const vertexesContent = `${nomor} ${vertexHIPs}`;
+
+        if(!vertexesTab) {
+            vertexesTab = window.open();
+            vertexesTab.document.write(`
+                <html>
+                    <head>
+                        <title>Vertexes HIP</title>
+                    </head>
+                    <body>
+                        <pre>${vertexesContent}</pre>
+                        <script>
+                            window.addEventListener('beforeunload', (event) => {
+                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
+                                event.returnValue = confirmationMessage; // For most browsers
+                                return confirmationMessage; // For some browsers
+                            });
+                        <\/script>
+                    </body>
+                </html>
+                `);
+//            vertexesTab.document.write('<pre>' + vertexesContent + '</pre>');
+//            vertexesTab.document.title = 'Vertexes HIP';
+            vertexesTab.document.close();
+        } else {
+            vertexesTab.document.querySelector('pre').innerHTML += '\n' + vertexesContent;//vertexesTab.document.body.innerHTML +='<pre>' + vertexesContent + '</pre>';
+        }
+
+        //wholePoints is the data from csv
+        const wholePoints = lon.map((lon,index) => {
+            return {x:lon, y:lat[index]};
+        });
+        const pointsWithinHull = getPointsWithinHull(wholePoints,hull);
+
+        const pointsInsideHull = [];
+
+        //Find the point from sub-catalog inside the convexhull
+        pointsWithinHull.forEach(pointWithinHull => {
+            const isInside = stars_inside_hull_normal(polygon,pointWithinHull);
+            if(isInside) {
+                console.log(`The point (${pointWithinHull.x}, ${pointWithinHull.y}) is inside the polygon.`);
+                pointsInsideHull.push(pointWithinHull);
+            } else {
+                console.log(`The point (${pointWithinHull.x}, ${pointWithinHull.y}) is outside the polygon.`);
+            }
+        });
+
+        const starsInsideHull = [];
+
+        // Find the second routine
+        pointsWithinHull.forEach(mirror => {
+            const isInside2 = stars_inside_hull_abnormal(hull,mirror);
+            if(isInside2) {
+                console.log(`The point (${mirror.x}, ${mirror.y}) is inside the polygon.`);
+                starsInsideHull.push(mirror);
+            } else {
+                console.log(`The point (${mirror.x}, ${mirror.y}) is inside the polygon.`)
+            }
+        });
+      
+        const insideHIPs = [];
+        
+        for (let i = 0; i < pointsInsideHull.length; i++) {
+            const insidePoint = pointsInsideHull[i];
+            const hip = text.find((hip, index) => {
+                return Math.abs(lon[index] - insidePoint.x) < 1e-6 && Math.abs(lat[index] - insidePoint.y) < 1e-6;
+            });
+            if (hip) {
+                insideHIPs.push(hip.trim());
+            }
+
+        }
+
+        const insidemirror = [];
+        
+        for (let i = 0; i < starsInsideHull.length; i++) {
+            const insidePoint = starsInsideHull[i];
+            const hip = text.find((hip, index) => {
+                return Math.abs(lon[index] - insidePoint.x) < 1e-6 && Math.abs(lat[index] - insidePoint.y) < 1e-6;
+            });
+            if (hip) {
+                insidemirror.push(hip.trim());
+            }
+        }
+        if(insidemirror.length > 0 && insideHIPs.length > 0) {
+            insidemirror[0] = ','+insidemirror[0];
+        } else {
+            insidemirror[0];
+        }
+
+        const insideContent = `${nomor} ${insideHIPs}${insidemirror}`;
+
+        if(!insideTab) {
+            insideTab = window.open();
+            insideTab.document.write(`
+                <html>
+                    <head>
+                        <title>Inside Hull</title>
+                    </head>
+                    <body>
+                        <pre>${insideContent}</pre>
+                        <script>
+                            window.addEventListener('beforeunload', (event) => {
+                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
+                                event.returnValue = confirmationMessage; // For most browsers
+                                return confirmationMessage; // For some browsers
+                            });
+                        <\/script>
+                    </body>
+                </html>
+                `);
+//            insideTab.document.write('<pre>' + insideContent + '</pre>');
+//            insideTab.document.title = 'Inside Hull HIP';
+            insideTab.document.close();
+        } else {
+            insideTab.document.querySelector('pre').innerHTML += '\n' + insideContent;//insideTab.document.body.innerHTML +='<pre>' + insideContent + '</pre>';
+        }
+        console.log("stickFigure", stickFigure);
+        
+        fileContents = stickFigure.map((line,index) => {
+            const hips = new Set(line.map(point => {
+                return text.find((hip, i) => {
+                    const lon = lon_array[i];
+                    const lat = lat_array[i];
+                    return Math.abs(lon - point.x) < 1e-6 && Math.abs(lat - point.y) < 1e-6;
+                });
+            }).filter(Boolean));
+            return [...hips].map(hip=>hip.replace('HIP','').trim()).join(', ').trim(); //Remove the term "HIP"
+        }).join(', ');
+
+        const saveAsContent = `${nomor} ${stickFigure.length} ${fileContents}`;
+        if (!saveAsTab) {
+            saveAsTab = window.open();
+            saveAsTab.document.write(`
+                <html>
+                    <head>
+                        <title>Asterisms' HIP</title>
+                    </head>
+                    <body>
+                        <pre>${saveAsContent}</pre>
+                        <script>
+                            window.addEventListener('beforeunload', (event) => {
+                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
+                                event.returnValue = confirmationMessage; // For most browsers
+                                return confirmationMessage; // For some browsers
+                            });
+                        <\/script>
+                    </body>
+                </html>
+                `);
+//            saveAsTab.document.write('<pre>' + saveAsContent + '</pre>');
+//            saveAsTab.document.title = "Asterisms' HIP";
+            saveAsTab.document.close();
+        } else {
+            saveAsTab.document.querySelector('pre').innerHTML += '\n' + saveAsContent;//saveAsTab.document.body.innerHTML +='<pre>' + saveAsContent + '</pre>';
+        }       
+
+        const constellation = {
+            id: `CON ${folderName} ${nomor}`,
+            lines: fileContents,
+            common_name: {
+                english: labelTranslated,
+                native: labelNative,
+                pronounce: labelPronounce,
+                ipa: labelIPA
+            }
+        };
+        constellationsList.push(constellation);
+        stickFigure = [];
+        lastPoint = null;
+    });
+
+
+
+
+/*    let dataset = {
         dataArray: [],
     };
 
@@ -1668,7 +1756,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             dataset.dataArray.push(Entry);   
         }
     }
-    
+    */
     /*
     const listConstellations = {};
                 id: `CON ${entry.skyculture} ${entry.number}`,
@@ -1682,35 +1770,25 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     */
 
     function download_JSON_Format() {
-        function filterEmpty(obj){
-            return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null && v !== ''));
-            
-        }
-//        const NamesForConstellation = LabelNames.map(ln => `"english": "${ln.labelTranslated}", "native": "${ln.labelNative}", "pronounce": "${ln.labelPronounce}"`);
         // Structure of JSON output
         const index_JSON = {
             id: folderName,
             region: regionName,
             classification: classificationName,
             fallback_to_international_names: false,
-//            cobaan: NamesForConstellation,
-            constellations: dataset.dataArray.map(entry => ({
-                id: `CON ${entry.skyculture} ${entry.number}`,
-                lines: entry.lines_ar,
-                common_name: {
-                    english: entry.common_name_one.english,
-                    native: entry.common_name_one.native,
-                    pronounce: entry.common_name_one.pronounce,
-                },
-            })),
+            constellations: constellationsList,
             common_names: commonNames,
         };
 
-        const jsonstring = JSON.stringify(index_JSON,null,2);
+        let jsonstring = JSON.stringify(index_JSON,null,2);
+        jsonstring = jsonstring.replace(/"lines":\s*"(\[.*?\])"/g, (match, p1) => {
+            const unescape = p1.replace(/\\"/g, '"');
+            return `"lines": ${unescape}`;
+        }); // Remove quotes from keys
         const blob = new Blob([jsonstring], {type: 'application/json'});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'constellation-artwork.json';
+        link.download = 'index.json';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1724,7 +1802,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             return;
         }
         try{
-            addData();
+//            addData();
             download_JSON_Format();
             /*
             // Create a file handle for the list of HIP file
@@ -1906,6 +1984,8 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         });
     });    
     
+    let actualwidth = '';
+    let actualheight = '';
     document.getElementById('image-upload').addEventListener('change', (e) => {
         const file = e.target.files[0];
         picture = file.name;
@@ -1914,6 +1994,8 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             UploadedImage = event.target.result;        
             const image = new Image();
             image.onload = () => {  
+                actualwidth = image.naturalWidth;
+                actualheight = image.naturalHeight;
                 image.style.opacity = opacitySlider.value;
                 mainImage.opacity = opacitySlider.value;
                 theImageOpacity = opacitySlider.value;
@@ -2151,20 +2233,22 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 //const lonRange = [RAmin + 0.5*RAtotal , RAmax + 0.5*RAtotal];
                 //const latRange = [avgLat - 20, avgLat + 20];      
                 //const lonRange = [RAmin - 0.5*RAtotal, RAmax + 0.5*RAtotal];
+                const midlon = RAmax - RAtotal/2;
+                const midlat = DEmax - DEtotal/2;
                 let lonRange;
                 if(RAtotal > 0) {
-                    lonRange = [RAmin - 0.5*RAtotal, RAmax + 0.5*RAtotal];
+                    lonRange = [avgLon - 0.5*RAtotal, avgLon + 0.5*RAtotal];
                 } else {
-                    lonRange = [0.5*RAtotal + RAmin, 0.5*RAtotal + RAmax];
+                    lonRange = [0.5*RAtotal + avgLon, 0.5*RAtotal + avgLon];
                 }
-                const latRange = [DEmin - 0.5*DEtotal, DEmax + 0.5*DEtotal];   
+                const latRange = [avgLat - 0.5*DEtotal, avgLat + 0.5*DEtotal];   
     
                 console.log("LONRANGE", lonRange);
                 console.log("LATRANGE", latRange);
                 Plotly.relayout('plot', {
                     'geo.center.lon': avgLon,
                     'geo.center.lat': avgLat,
-                    'geo.projection.type': 'mollweide', // 'orthographic' jadi bulat bola
+                    'geo.projection.type': 'mollweide', 
                     'geo.lonaxis.range' : lonRange,
                     'geo.lataxis.range' : latRange,
                     //'geo.zoom': 10,
@@ -2223,7 +2307,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     }
 
     function fourthPixel() {
-        //hitung avg PIXEL = pixelCoordinates
         let sumPixX = 0;
         let sumPixY = 0;
 
@@ -2297,14 +2380,182 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         console.log(`Displaying mode ${mode}`);
         if(displaying_enabled) {
             document.getElementById('display-image').style.backgroundColor = 'orange';
-//            calculating_fourthPoint();
-//            scalling();
             addImageToPlot();
             document.getElementById('artwork-container').classList.remove('hidden');
+
+            const opac = opacitySlider.value;
+
+            const controlPoints = [
+                {lat: selectedStars[0].lat, lon: selectedStars[0].lon, imgX: parseFloat(pixelCoordinates[0].split(' ')[0]), imgY: parseFloat(pixelCoordinates[0].split(' ')[1])},
+                {lat: selectedStars[1].lat, lon: selectedStars[1].lon, imgX: parseFloat(pixelCoordinates[1].split(' ')[0]), imgY: parseFloat(pixelCoordinates[1].split(' ')[1])},
+                {lat: selectedStars[2].lat, lon: selectedStars[2].lon, imgX: parseFloat(pixelCoordinates[2].split(' ')[0]), imgY: parseFloat(pixelCoordinates[2].split(' ')[1])},
+            ]
+            function calculateTransform(points) {
+                const A = [
+                    [points[0].imgX, points[0].imgY, 1, 0, 0, 0],
+                    [0, 0, 0, points[0].imgX, points[0].imgY, 1],
+                    [points[1].imgX, points[1].imgY, 1, 0, 0, 0],
+                    [0, 0, 0, points[1].imgX, points[1].imgY, 1],
+                    [points[2].imgX, points[2].imgY, 1, 0, 0, 0],
+                    [0, 0, 0, points[2].imgX, points[2].imgY, 1]
+    
+                ];
+                const B = [
+                    points[0].lon,
+                    points[0].lat,
+                    points[1].lon,
+                    points[1].lat,
+                    points[2].lon,
+                    points[2].lat
+                ];
+                // Solve the system A * X = B
+                function solve(A, B) {
+                    const n = A.length;
+                    
+                    for (let i = 0; i < n; i++) {
+                        let maxEl = Math.abs(A[i][i]);
+                        let maxRow = i;
+                        for (let k = i + 1; k < n; k++) {
+                            if (Math.abs(A[k][i]) > maxEl) {
+                                maxEl = Math.abs(A[k][i]);
+                                maxRow = k;
+                            }
+                        }
+                        
+                        for (let k = i; k < n; k++) {
+                            const tmp = A[maxRow][k];
+                            A[maxRow][k] = A[i][k];
+                            A[i][k] = tmp;
+                        }
+                        const tmp = B[maxRow];
+                        B[maxRow] = B[i];
+                        B[i] = tmp;
+                        
+                        for (let k = i + 1; k < n; k++) {
+                            const c = -A[k][i] / A[i][i];
+                            for (let j = i; j < n; j++) {
+                                if (i === j) {
+                                    A[k][j] = 0;
+                                } else {
+                                    A[k][j] += c * A[i][j];
+                                }
+                            }
+                            B[k] += c * B[i];
+                        }
+                    }
+                    
+                    const X = new Array(n);
+                    for (let i = n - 1; i >= 0; i--) {
+                        X[i] = B[i] / A[i][i];
+                        for (let k = i - 1; k >= 0; k--) {
+                            B[k] -= A[k][i] * X[i];
+                        }
+                    }
+                    return X;
+                }
+                
+                const X = solve(A, B);
+                
+                return [
+                    [X[0], X[1], X[2]],  // Row 1 (for lon)
+                    [X[3], X[4], X[5]],  // Row 2 (for lat)
+                    [0, 0, 1]            // Row 3 (homogeneous)
+                ];
+            }
+            const transformMatrix = calculateTransform(controlPoints);
+            // 3. Function to transform image coordinates to geographic coordinates 
+            function imageToMap(x, y) {
+                const vec = [x, y, 1];
+                const lon = transformMatrix[0][0] * vec[0] + transformMatrix[0][1] * vec[1] + transformMatrix[0][2] * vec[2];
+                const lat = transformMatrix[1][0] * vec[0] + transformMatrix[1][1] * vec[1] + transformMatrix[1][2] * vec[2];
+                return [lat, lon];
+            }
+            // 4. Calculate bounds for the overlay
+            const topLeft = imageToMap(0, 0);
+            const topRight = imageToMap(actualwidth, 0);
+            const bottomLeft = imageToMap(0, actualheight);
+            const bottomRight = imageToMap(actualwidth, actualheight);
+    
+            // 5. Prepare Plotly data
+            const plotlyData = [            
+                // Image overlay
+                {
+                    type: "scattermapbox",
+                    mode: "markers",
+                    lat: [topLeft[0], topRight[0], bottomRight[0], bottomLeft[0]],
+                    lon: [topLeft[1], topRight[1], bottomRight[1], bottomLeft[1]],
+                    marker: {
+                        size: 0  // Hide the markers
+                    },
+                    fill: "toself",
+                    fillcolor: 'rgba(0,0,0,0)',
+                    hoverinfo: "none",
+                    showlegend: false
+                },
+                
+                // Control points
+                {
+                    type: "scattermapbox",
+                    mode: "markers+text",
+                    lat: controlPoints.map(p => p.lat),
+                    lon: controlPoints.map(p => p.lon),
+                    textposition: "top right",
+                    marker: {
+                        size: 12,
+                        color: 'red'
+                    },
+                    name: "Control Points",
+                    hoverinfo: "text",
+                    hovertext: controlPoints.map(p => `Image: (${p.imgX}, ${p.imgY})`)
+                }
+            ];
+            
+            // 6. Create the layout with the image overlay
+            const layout = {
+                mapbox: {
+                    style: "white-bg",  // or use "white-bg" for no base map
+                    center: {
+                        lat: controlPoints[0].lat,
+                        lon: controlPoints[0].lon
+                    },
+                    background: "#0D1130",
+                    zoom: 14,
+                    layers: [{
+                        sourcetype: "image",
+                        source: UploadedImage,  // Replace with your image URL
+                        coordinates: [
+                            [topLeft[1], topLeft[0]],      // NW
+                            [topRight[1], topRight[0]],      // NE
+                            [bottomRight[1], bottomRight[0]], // SE
+                            [bottomLeft[1], bottomLeft[0]]   // SW
+                        ],                    
+                        /*
+                        coordinates: [
+                            [bottomLeft[1], bottomLeft[0]],  // SW
+                            [bottomRight[1], bottomRight[0]], // SE
+                            [topRight[1], topRight[0]],      // NE
+                            [topLeft[1], topLeft[0]]        // NW
+                        ],*/
+                        opacity: opac,
+                        below: "traces"  // Show below other data
+                    }]
+                },
+                margin: {"r":0,"t":0,"l":0,"b":0},
+                showlegend: false
+            };
+            
+            // 7. Create the Plotly map
+            Plotly.newPlot('overlay-map', plotlyData, layout);
+    
+            var plotDiv = document.getElementById('overlay-map');
+            plotDiv.style.display='block';
+    
+            
         } else {
             document.getElementById('display-image').style.backgroundColor = 'white';
             document.getElementById('artwork-container').classList.add('hidden');
             removeImageFromPlot();
+            removeImagePlot();
         }
         const selectedLabel = document.getElementById('constellation-select').value;
         const position = constellationLabels[selectedLabel] || constellationMidpoints[selectedLabel];
@@ -2318,7 +2569,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         const opac = opacitySlider.value;
         console.log("Adding images to plot...");
         const imageUrl = UploadedImage;
-        const imaLoc = { lon: 0, lat: 0 };
+        const imaLoc = { lon: threePixelAvg.lon, lat: threePixelAvg.lat};
         const imageObject = {
           source: imageUrl,
           xref: "geo",
@@ -2340,6 +2591,12 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         console.log("Removing images from plot...");
         Plotly.relayout('plot', { images: [] });
     };
+
+    function removeImagePlot() {
+        Plotly.purge('overlay-map');
+        var plotDiv = document.getElementById('overlay-map');
+        plotDiv.style.display='none';
+    }
 
     document.getElementById('save-coor').addEventListener('click', async () => {
         const selectedLabel = document.getElementById('constellation-select').value;
@@ -2380,131 +2637,172 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     });
 
     document.getElementById('display-artwork').addEventListener('click', () => {
-/*        var image_update = {
-            images: [{
-                source: UploadedImage,
-                xref: 'geo', //'x',
-                yref: 'geo', //'y',
-                x: threeHIPAvg.x,
-                y: threeHIPAvg.y,
-                sizex: scales.x,
-                sizey: scales.y,
-                sizing: 'stretch',
-                layer: 'above',
-            }]
-        };
-        console.log("link:", source);
-        console.log("xref:", xref);
-        console.log("yref:", yref);
-        console.log("x:", threeHIPAvg.lon);
-        console.log("y:", threeHIPAvg.lat);
-        console.log("sizex:", scaleRA);
-        console.log("sizey:", scaleDE);
-        Plotly.relayout('plot', image_update);
-*/
+        const opac = opacitySlider.value;
 
-        // Normalize longitude to the 0-360° range
-        function normalizeLongitude(lon) {
-        return lon % -360;
-        }
+        const controlPoints = [
+            {lat: selectedStars[0].lat, lon: selectedStars[0].lon, imgX: parseFloat(pixelCoordinates[0].split(' ')[0]), imgY: parseFloat(pixelCoordinates[0].split(' ')[1])},
+            {lat: selectedStars[1].lat, lon: selectedStars[1].lon, imgX: parseFloat(pixelCoordinates[1].split(' ')[0]), imgY: parseFloat(pixelCoordinates[1].split(' ')[1])},
+            {lat: selectedStars[2].lat, lon: selectedStars[2].lon, imgX: parseFloat(pixelCoordinates[2].split(' ')[0]), imgY: parseFloat(pixelCoordinates[2].split(' ')[1])},
+        ]
+        function calculateTransform(points) {
+            const A = [
+                [points[0].imgX, points[0].imgY, 1, 0, 0, 0],
+                [0, 0, 0, points[0].imgX, points[0].imgY, 1],
+                [points[1].imgX, points[1].imgY, 1, 0, 0, 0],
+                [0, 0, 0, points[1].imgX, points[1].imgY, 1],
+                [points[2].imgX, points[2].imgY, 1, 0, 0, 0],
+                [0, 0, 0, points[2].imgX, points[2].imgY, 1]
 
-        // Cross product to determine turn direction
-        function crossProduct(o, a, b) {
-        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-        }
-
-        // Graham's Scan algorithm to compute convex hull
-        function grahamScan(points) {
-        // Sort points by latitude, then by longitude
-        points.sort((a, b) => a[1] === b[1] ? a[0] - b[0] : a[1] - b[1]);
-
-        const lowerHull = [];
-        for (const point of points) {
-            while (lowerHull.length >= 2 && crossProduct(lowerHull[lowerHull.length - 2], lowerHull[lowerHull.length - 1], point) <= 0) {
-            lowerHull.pop();
+            ];
+            const B = [
+                points[0].lon,
+                points[0].lat,
+                points[1].lon,
+                points[1].lat,
+                points[2].lon,
+                points[2].lat
+            ];
+            // Solve the system A * X = B
+            function solve(A, B) {
+                const n = A.length;
+                
+                for (let i = 0; i < n; i++) {
+                    let maxEl = Math.abs(A[i][i]);
+                    let maxRow = i;
+                    for (let k = i + 1; k < n; k++) {
+                        if (Math.abs(A[k][i]) > maxEl) {
+                            maxEl = Math.abs(A[k][i]);
+                            maxRow = k;
+                        }
+                    }
+                    
+                    for (let k = i; k < n; k++) {
+                        const tmp = A[maxRow][k];
+                        A[maxRow][k] = A[i][k];
+                        A[i][k] = tmp;
+                    }
+                    const tmp = B[maxRow];
+                    B[maxRow] = B[i];
+                    B[i] = tmp;
+                    
+                    for (let k = i + 1; k < n; k++) {
+                        const c = -A[k][i] / A[i][i];
+                        for (let j = i; j < n; j++) {
+                            if (i === j) {
+                                A[k][j] = 0;
+                            } else {
+                                A[k][j] += c * A[i][j];
+                            }
+                        }
+                        B[k] += c * B[i];
+                    }
+                }
+                
+                const X = new Array(n);
+                for (let i = n - 1; i >= 0; i--) {
+                    X[i] = B[i] / A[i][i];
+                    for (let k = i - 1; k >= 0; k--) {
+                        B[k] -= A[k][i] * X[i];
+                    }
+                }
+                return X;
             }
-            lowerHull.push(point);
+            
+            const X = solve(A, B);
+            
+            return [
+                [X[0], X[1], X[2]],  // Row 1 (for lon)
+                [X[3], X[4], X[5]],  // Row 2 (for lat)
+                [0, 0, 1]            // Row 3 (homogeneous)
+            ];
         }
+        const transformMatrix = calculateTransform(controlPoints);
+        // 3. Function to transform image coordinates to geographic coordinates 
+        function imageToMap(x, y) {
+            const vec = [x, y, 1];
+            const lon = transformMatrix[0][0] * vec[0] + transformMatrix[0][1] * vec[1] + transformMatrix[0][2] * vec[2];
+            const lat = transformMatrix[1][0] * vec[0] + transformMatrix[1][1] * vec[1] + transformMatrix[1][2] * vec[2];
+            return [lat, lon];
+        }
+        // 4. Calculate bounds for the overlay
+        const topLeft = imageToMap(0, 0);
+        const topRight = imageToMap(actualwidth, 0);
+        const bottomLeft = imageToMap(0, actualheight);
+        const bottomRight = imageToMap(actualwidth, actualheight);
 
-        const upperHull = [];
-        for (let i = points.length - 1; i >= 0; i--) {
-            const point = points[i];
-            while (upperHull.length >= 2 && crossProduct(upperHull[upperHull.length - 2], upperHull[upperHull.length - 1], point) <= 0) {
-            upperHull.pop();
+        // 5. Prepare Plotly data
+        const plotlyData = [            
+            // Image overlay
+            {
+                type: "scattermapbox",
+                mode: "markers",
+                lat: [topLeft[0], topRight[0], bottomRight[0], bottomLeft[0]],
+                lon: [topLeft[1], topRight[1], bottomRight[1], bottomLeft[1]],
+                marker: {
+                    size: 0  // Hide the markers
+                },
+                fill: "toself",
+                fillcolor: 'rgba(0,0,0,0)',
+                hoverinfo: "none",
+                showlegend: false
+            },
+            
+            // Control points
+            {
+                type: "scattermapbox",
+                mode: "markers+text",
+                lat: controlPoints.map(p => p.lat),
+                lon: controlPoints.map(p => p.lon),
+                textposition: "top right",
+                marker: {
+                    size: 12,
+                    color: 'red'
+                },
+                name: "Control Points",
+                hoverinfo: "text",
+                hovertext: controlPoints.map(p => `Image: (${p.imgX}, ${p.imgY})`)
             }
-            upperHull.push(point);
-        }
-
-        // Remove duplicate end points
-        upperHull.pop();
-        lowerHull.pop();
-
-        return lowerHull.concat(upperHull);
-        }
-
-        // Main function to compute convex hull for points with longitudes in the 0-360° range
-        function computeConvexHull(longitudes, latitudes) {
-        // Combine longitudes and latitudes into point tuples
-        let points = longitudes.map((lon, index) => [normalizeLongitude(lon), latitudes[index]]);
-
-        // Split points into two groups: left and right of the anti-meridian
-        const leftOfAntiMeridian = points.filter(p => p[0] >= -180);
-        const rightOfAntiMeridian = points.filter(p => p[0] < -180);
-
-        // Compute convex hulls separately for each group
-        const hullLeft = grahamScan(leftOfAntiMeridian);
-        const hullRight = grahamScan(rightOfAntiMeridian);
-
-        // Merge the two hulls (if necessary, depending on your application)
-        return hullLeft.concat(hullRight); // Adjust merging logic as needed
-        }
-
-        // Example usage with dummy data
-        const longitudes = [-350, -10, -190, -200];
-        const latitudes = [10, 20, 30, 40];
-        const coords = longitudes.map((lon, index) => [lon, latitudes[index]]);
-
-        const convexHull = computeConvexHull(longitudes, latitudes);
-        console.log("Convex Hull Points:", convexHull);
-
-        const pointstrace = {
-            type: 'scattergeo',
-            mode: 'markers',
-            lon: coords.map(p => p[0]),
-            lat: coords.map(p => p[1]),
-            marker: {
-                color: 'blue',
-                size: 10,
+        ];
+        
+        // 6. Create the layout with the image overlay
+        const layout = {
+            mapbox: {
+                style: "white-bg",  // or use "white-bg" for no base map
+                center: {
+                    lat: controlPoints[0].lat,
+                    lon: controlPoints[0].lon
+                },
+                background: "#0D1130",
+                zoom: 14,
+                layers: [{
+                    sourcetype: "image",
+                    source: UploadedImage,  // Replace with your image URL
+                    coordinates: [
+                        [topLeft[1], topLeft[0]],      // NW
+                        [topRight[1], topRight[0]],      // NE
+                        [bottomRight[1], bottomRight[0]], // SE
+                        [bottomLeft[1], bottomLeft[0]]   // SW
+                    ],                    
+                    /*
+                    coordinates: [
+                        [bottomLeft[1], bottomLeft[0]],  // SW
+                        [bottomRight[1], bottomRight[0]], // SE
+                        [topRight[1], topRight[0]],      // NE
+                        [topLeft[1], topLeft[0]]        // NW
+                    ],*/
+                    opacity: opac,
+                    below: "traces"  // Show below other data
+                }]
             },
+            margin: {"r":0,"t":0,"l":0,"b":0},
+            showlegend: false
         };
-        Plotly.addTraces('plot', pointstrace).then(() => {
-            Plotly.relayout('plot', {
-                'geo.scope': 'mollweide',
-            });
-        }).catch((error) => {
-            console.error("Error adding trace:", error);
-        });
-        const hullTrace = {
-            type: 'scattergeo',
-            mode: 'lines',
-            lon: convexHull.map(p => p[0]),
-            lat: convexHull.map(p => p[1]),
-            line: {
-                color: 'red',
-                width: 2,
-            },
-        };
-        Plotly.addTraces('plot', hullTrace).then(() => {
-            Plotly.relayout('plot', {
-                'geo.scope': 'mollweide',
-            });
-        }).catch((error) => {
-            console.error("Error adding trace:", error);
-        });
+        
+        // 7. Create the Plotly map
+        Plotly.newPlot('overlay-map', plotlyData, layout);
+        
     });
 
-    /*
-    */
 
 
     function openPermission() {
