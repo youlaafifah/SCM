@@ -2514,8 +2514,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     });
 
     document.getElementById('manual').addEventListener('click', function() {
-        var papyrus = document.getElementById('myScroll');
-        papyrus.style.display = 'block';
+        openScroll();
     });
 
     
