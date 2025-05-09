@@ -130,18 +130,6 @@ html_content = f"""
         <div class="modal-content" id="modal-content"></div>
     </div>
 
-    <!-- Asking permission -->
-    <div id="askPermission" class="askPermission">
-        <div class="askPermission-content">
-            <label>
-                <input type="checkbox" id="Checkbox"> Don't show it again
-            </label>
-            <span class="close-permission">&times;</span>
-            <h2>Permission Reminder</h2>
-            <p>This Star Chart requires pop-up. Please unblock the pop-up display in your setting</p>
-            <button id="ok-upload">OK</button>
-        </div>
-    </div>
 
     <!-- The Scroll -->
     <div id="myScroll" class="Scroll">

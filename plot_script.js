@@ -33,7 +33,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 gridwidth: 0.5,
                 tick0: -180,
                 dtick: 30,
-//                range: [-180, -180]
             },
             lataxis: {
                 showgrid: true,
@@ -43,7 +42,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 dtick: 30,
                 range: [-90, 90]
             },
-//            center: { lon: 0, lat: 0 },
         },
         dragmode: 'pan',
         paper_bgcolor: '#0D1130',
@@ -90,6 +88,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     var drawing_enabled = false;
     var stickFigure =[];
     var traceIndices =[]; 
+    var constellationLines = [];
 
     var newstickFigure = []; 
     var newtraceIndices = [];
@@ -163,8 +162,9 @@ function initializePlot(lon, lat, text, size, ra, mag) {
 
         const lines = cnstlContents.trim().split('\n');
         const HIPContents = lines.map(line => {
-            const parts = line.split(' ');
-            return parts.slice(2).join(' '); // (2) because, the HIP list is started at the third column. When 1stcolumn is 0.
+            const parts = line.split(',');
+            const hipNumbers = parts[0].split(' ').slice(2).concat(parts.slice(1));
+            return hipNumbers.join(' '); // (2) because, the HIP list is started at the third column. When 1stcolumn is 0.
         }).filter(line => line.length > 0);
 
         const hipNumbers = HIPContents.map(line => 
@@ -228,7 +228,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 text: [starName],
                 textposition: "middle center",
                 textfont:{
-                    color: 'green',
+                    color: '#6699e6',
                     size: 15,
                 }  
             };
@@ -332,10 +332,10 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             regionDropMenu.appendChild(optionDiv);
         });
         regionDropMenu.style.display = 'block';
-        document.getElementById('regionSearch').style.display = 'block'; // Show the dropdown menu
+        document.getElementById('regionSearch').style.display = 'block'; 
         document.getElementById('regionSearch').addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();
-            regionDropMenu.innerHTML = ''; // Clear previous options
+            regionDropMenu.innerHTML = ''; 
             const options = regionDropMenu.children;
             let hasVisibleOptions = false;
             const addedRegions = new Set(); // Track added regions to avoid duplicates
@@ -355,7 +355,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                         });
                         regionDropMenu.appendChild(optionDiv);
                         hasVisibleOptions = true;
-                        addedRegions.add(theRegion); // Add to the set of added regions
+                        addedRegions.add(theRegion);
                     }    
                 }
             }
@@ -379,11 +379,11 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         });
 
         document.getElementById('regionSearch').addEventListener('focus', function() {
-            regionDropMenu.style.display = 'block'; // Show the dropdown menu
+            regionDropMenu.style.display = 'block';
         });
         document.addEventListener('click', function(event) {
             if (!regionDropMenu.contains(event.target) && event.target !== document.getElementById('regionSearch')) {
-                regionDropMenu.style.display = 'none'; // Hide the dropdown menu
+                regionDropMenu.style.display = 'none'; 
             }
         });
     }
@@ -402,7 +402,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             {name: 'Comparative', info: 'Special-purpose compositions of e.g. artwork from one and stick figures from another sky culture, and optionally asterisms as representations of a third. Or comparison of two stick figure sets in constellations and asterisms. These figures sometimes will appear not to fit together well. This may be intended, to explain and highlight just those differences! The description text must clearly explain and identify all sources and how these differences should be interpreted.'},
         ];
         const classificationDropMenu = document.getElementById('classificationDropdown');
-        classificationDropMenu.innerHTML = ''; // Clear previous options
+        classificationDropMenu.innerHTML = '';
         classifications.forEach(classification => {
             const optionClassification = document.createElement('option');
             optionClassification.value = classification.name;
@@ -413,10 +413,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         classificationDropMenu.style.display = 'block';
         classificationDropMenu.addEventListener('change', function() {
             classificationName = this.value.trim();
-//            classificationDropMenu.style.display = 'none'; // Hide the dropdown menu
-//            document.getElementById('regionDropdown').style.display = 'none'; // Hide the region dropdown menu
-//            document.getElementById('regionSearch').style.display = 'none';
-
         });
     }
 
@@ -451,10 +447,10 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                         const lineTrace = {
                             type: 'scattergeo',
                             mode: 'lines',
-                            lon: [points[j].x + lonOffset, points[j + 1].x - lonOffset], // Connect point(j) and point (j+1) //points.map(point => point.x),
-                            lat: [points[j].y + latOffset, points[j + 1].y - latOffset], //points.map(point => point.y),
+                            lon: [points[j].x + lonOffset, points[j + 1].x - lonOffset], // Connect point(j) and point (j+1)
+                            lat: [points[j].y + latOffset, points[j + 1].y - latOffset], 
                             line: {
-                                color:'green',
+                                color:'#333399',
                                 width:2,
                                 opacity:0.5,
                             },
@@ -561,7 +557,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             if(selectedStars.length > 2) {
                 starOutputThree.innerHTML = `${selectedStarNames[3]}`;
             }
-            calculating_fourthPoint ();
         }
     
 
@@ -594,7 +589,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                         lon: [lines[0].x + lonOffset, lines[1].x - lonOffset],
                         lat: [lines[0].y + latOffset, lines[1].y - latOffset],
                         line: {
-                            color:'blue',
+                            color:'#333399',
                             width:5,
                             opacity:0.5
                         },
@@ -603,6 +598,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                     Plotly.addTraces('plot',lineTrace).then(function(additionResult){
                         traceIndices.push(additionResult);
                         stickFigure.push([...lines]);
+                        constellationLines.push([...lines]);
                         lines = [];
                     }).catch(function(error) {
                         console.error("Error adding trace:", error);
@@ -636,7 +632,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 selectedLineIndex = point.curveNumber;
                 if (previousSelectedLineIndex !== null && previousSelectedLineIndex !== selectedLineIndex) {
                     // Reset previous line style
-                    Plotly.restyle('plot', {line: {width:2, opacity: 0.5, color:'blue'}}, [previousSelectedLineIndex]);
+                    Plotly.restyle('plot', {line: {width:2, opacity: 0.5, color:'#333399'}}, [previousSelectedLineIndex]);
                 }
                 // Highlight selected line
                 Plotly.restyle('plot', {line:{width:5, opacity:1, color:'red'}}, [selectedLineIndex]);
@@ -651,6 +647,11 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 var point = data.points[0];
                 if(point.curveNumber === 0) {
                     lastPoint = {lon:point.lon, lat:point.lat};
+                    if(constellationLines.length>0) {
+                        fileContents.push(constellationLines.map(p => [p.x, p.y]));
+                        constellationLines = [];
+                    }
+                    lastPoint = null;
                     console.log("Starting new line from:", lastPoint);
                 }
             }
@@ -690,6 +691,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             Plotly.deleteTraces('plot', selectedLineIndex)
             .then(() => {
                 stickFigure.splice(selectedLineIndex -1 , 1); // Adjust index because star trace is at index 0
+                constellationLines.splice(selectedLineIndex -1 , 1);
                 traceIndices = traceIndices.filter(index => index !== selectedLineIndex);
                 for (let i = 0; i <traceIndices.length; i++) {
                     if (traceIndices[i] > selectedLineIndex) {
@@ -719,7 +721,8 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         if(currentTraceCount > 0) {
             Plotly.deleteTraces('plot', currentTraceCount-1)
             .then(() => {
-                stickFigure.pop(); //.splice(currentTraceCount - 1, 1); // Adjust index because star trace is at index 0
+                stickFigure.pop(); // Adjust index because star trace is at index 0
+                constellationLines.pop();
                 console.log(`Deleted trace at index:, ${currentTraceCount -1}`);
             }).catch(function(error) {
                 console.error("Error deleting trace:", error);
@@ -1376,29 +1379,20 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             //Start midpoint
             let minLon = Infinity;
             let maxLon = - Infinity;
-//            let hasLonRange1 = false; // -360<=x<=-270
-//            let hasLonRange2 = false; // -90<=x<=0
 
             for(let i = 0; i < stickFigure.length; i++) {
                 for (let j = 0; j < stickFigure[i].length; j++) {
                     const lon = stickFigure[i][j].x;
                     minLon = Math.min(minLon, lon);
                     maxLon = Math.max(maxLon, lon);
-/*                    if(lon >= -360 && lon <= -270) {
-                        hasLonRange1 = true;
-                    }
-                    if(lon >= -90 && lon <= 0) {
-                        hasLonRange2 = true;
-                    }*/
                 }
-//                console.log("minmaxLon", {minLon, maxLon});
             }
-            if (maxLon<=0 && minLon>= -360){//(hasLonRange1 &&  hasLonRange2) {
+            if (maxLon<=0 && minLon>= -360){
                 const lonDiff = minLon - maxLon;
                 for(let i = 0; i < stickFigure.length; i++) {
                     for (let j = 0; j < stickFigure[i].length; j++) {
                         let lon = stickFigure[i][j].x;
-                        if(lonDiff<-180 && lon>-180){//(lon >= -180 && lon <= 0) {
+                        if(lonDiff<-180 && lon>-180){
                             lon += -360;
                         }
                         sumLon += lon;
@@ -1421,7 +1415,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                             text: [labelNative],
                             textposition: "middle center",
                             textfont: {
-                                color: 'green',
+                                color: '#6699e6',
                                 size: 25,
                             }
                         };
@@ -1525,19 +1519,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             }
             console.log("SECOND modi", modi);
         }
-/*        if(maxLong <= 0 && minLong >= -360){
-            const longDiff = minLong - maxLong;
-            for (let i = 0; i < modi.length; i++){
-                for (let j = 0; j < modi[i].length; j++) {
-                    let long = modi[i][j].x;
-                    if (longDiff < -180 && long > -180) {
-                        long += -360;
-                    }
-                    modi[i][j].x = long;
-                }
-            }
-            console.log("SECOND modi", modi);
-        }*/
 //Batasnya
         const allPoints = modi.flat(); 
         console.log("allPoints", allPoints);
@@ -1560,7 +1541,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             }            
         }
 
-        const vertexesContent = `${nomor} ${vertexHIPs}`;
+        const vertexesContent = `${nomor} ${vertexHIPs.length} ${vertexHIPs}`;
 
         if(!vertexesTab) {
             vertexesTab = window.open();
@@ -1650,7 +1631,8 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             insidemirror[0];
         }
 
-        const insideContent = `${nomor} ${insideHIPs}${insidemirror}`;
+        const totalstars = insideHIPs.length + insidemirror.length;
+        const insideContent = `${nomor} ${totalstars} ${insideHIPs}${insidemirror}`;
 
         if(!insideTab) {
             insideTab = window.open();
@@ -1679,7 +1661,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         }
         console.log("stickFigure", stickFigure);
         
-        fileContents = stickFigure.map((line,index) => {
+        fileContents = constellationLines.map((line,index) => {
             const hips = new Set(line.map(point => {
                 return text.find((hip, i) => {
                     const lon = lon_array[i];
@@ -1687,8 +1669,14 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                     return Math.abs(lon - point.x) < 1e-6 && Math.abs(lat - point.y) < 1e-6;
                 });
             }).filter(Boolean));
-            return [...hips].map(hip=>hip.replace('HIP','').trim()).join(', ').trim(); //Remove the term "HIP"
-        }).join(', ');
+            return [... hips].map(hip => {
+                const number = parseInt(hip.replace('HIP', '').trim(), 10);
+                return isNaN(number)? null: number;
+            }).filter(num => num !== null);
+        }).flat();
+
+//            return [...hips].map(hip=>hip.replace('HIP','').trim()).join(', ').trim(); //Remove the term "HIP"
+//        }).join(', ');
 
         const saveAsContent = `${nomor} ${stickFigure.length} ${fileContents}`;
         if (!saveAsTab) {
@@ -1729,45 +1717,11 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         };
         constellationsList.push(constellation);
         stickFigure = [];
+        constellationLines = [];
         lastPoint = null;
     });
 
 
-
-
-/*    let dataset = {
-        dataArray: [],
-    };
-
-    function addData() {
-        if(folderName && nomor && labelTranslated && labelNative && labelPronounce && fileContents) {
-                const Entry = {
-                skyculture: folderName,
-                cultureRegion: regionName,
-                cultureClassification: classificationName,
-                lines_ar: fileContents,
-                number:nomor,
-                common_name_one: {
-                    english: labelTranslated, 
-                    native: labelNative, 
-                    pronounce: labelPronounce,
-                },
-            };
-            dataset.dataArray.push(Entry);   
-        }
-    }
-    */
-    /*
-    const listConstellations = {};
-                id: `CON ${entry.skyculture} ${entry.number}`,
-                lines: entry.lines_ar,
-                common_name: {
-                    english: entry.common_name_one.english,
-                    native: entry.common_name_one.native,
-                    pronounce: entry.common_name_one.pronounce,
-                },
-
-    */
 
     function download_JSON_Format() {
         // Structure of JSON output
@@ -1784,7 +1738,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         jsonstring = jsonstring.replace(/"lines":\s*"(\[.*?\])"/g, (match, p1) => {
             const unescape = p1.replace(/\\"/g, '"');
             return `"lines": ${unescape}`;
-        }); // Remove quotes from keys
+        });
         const blob = new Blob([jsonstring], {type: 'application/json'});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -1802,9 +1756,8 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             return;
         }
         try{
-//            addData();
             download_JSON_Format();
-            /*
+            
             // Create a file handle for the list of HIP file
             const listFileHandle = await chosenFolderHandle.getFileHandle('constellationship.fab', { create: true });
             // Create a writable stream for the list of HIP file
@@ -1837,7 +1790,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
             const coordStream = await coordFileHandle.createWritable();
             await coordStream.write(coordTab.document.body.innerText);
             await coordStream.close();
-            */
+            
 
             }
          catch (error) {
@@ -1919,7 +1872,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 const readVertexesLines = vertexesContents.trim().split('\n');
                 const HIPvertexesContent = readVertexesLines.map(line => {
                     const part = line.split(' ');
-                    return part.slice(1).join(' ');
+                    return part.slice(2).join(' ');
                 }).filter(line => line.length > 0);
                 const HIPvertexesNumbers = HIPvertexesContent.map(line =>
                     line.split(',').map(hip => hip));
@@ -2020,7 +1973,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                         currentPixel++;
                     }
                     updatePixelOutput();
-                    fourthPixel();
                 });
                 document.getElementById('first-sidebar-container').classList.add('hidden');
                 document.getElementById('second-sidebar-container').classList.remove('hidden');
@@ -2088,7 +2040,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                         currentPixel++;
                     }
                     updatePixelOutput();
-                    fourthPixel();
                 });
             };
             image.src = event.target.result;
@@ -2230,11 +2181,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                 document.getElementById('pixel-coordinates').classList.remove('hidden');
                 document.getElementById('second-sidebar-container').classList.add('show-overflow');
 
-                //const lonRange = [RAmin + 0.5*RAtotal , RAmax + 0.5*RAtotal];
-                //const latRange = [avgLat - 20, avgLat + 20];      
-                //const lonRange = [RAmin - 0.5*RAtotal, RAmax + 0.5*RAtotal];
-                const midlon = RAmax - RAtotal/2;
-                const midlat = DEmax - DEtotal/2;
                 let lonRange;
                 if(RAtotal > 0) {
                     lonRange = [avgLon - 0.5*RAtotal, avgLon + 0.5*RAtotal];
@@ -2251,7 +2197,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                     'geo.projection.type': 'mollweide', 
                     'geo.lonaxis.range' : lonRange,
                     'geo.lataxis.range' : latRange,
-                    //'geo.zoom': 10,
                 });
             }
         } else {
@@ -2285,90 +2230,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         console.log("PIXEL KORDINAT 55:",pixelCoordinates);
     };
 
-    let threeHIPAvg;
-    let threePixelAvg;
-    let scales;
-
-    function calculating_fourthPoint () {
-        //hitung avg HIP = selectedStars
-        let sumRA = 0;
-        let sumDE = 0;
-
-        for(let i = 0; i < Math.max(3, selectedStars.length); i++) {
-            sumRA += selectedStars[i].lon;
-            sumDE += selectedStars[i].lat;
-        }
-        const centroidRA = sumRA / 3;
-        const centroidDE = sumDE / 3;
-        threeHIPAvg = {lon:centroidRA, lat:centroidDE};
-        console.log("HIP AVG:", threeHIPAvg);
-
-
-    }
-
-    function fourthPixel() {
-        let sumPixX = 0;
-        let sumPixY = 0;
-
-        for (let j = 0; j < Math.max(3, pixelCoordinates.length); j++) {
-            const pixel = pixelCoordinates[j].split(' ');
-            const XPix = parseFloat(pixel[0]);
-            const YPix = parseFloat(pixel[1]);
-            if (!isNaN(XPix) && !isNaN(YPix)) {
-                sumPixX += XPix;
-                sumPixY += YPix;
-            } else {
-                console.error("Invalid pixel coordinates:", pixelCoordinates[j]);
-                warn(`Invalid values at index ${j}: X=${selectedStars[j].x}, Y=${selectedStars[j].y}`);
-            }
-        }
-        console.log("PIXEL SUM77:",sumPixX);
-        console.log("PIXEL SUM78:",sumPixY);
-        const centroidPixX = sumPixX / 3;
-        const centroidPixY = sumPixY / 3;
-        threePixelAvg = {x:centroidPixX, y:centroidPixY};
-        console.log("PIXEL AVG:", threePixelAvg);        
-
-    }
-
-    function scalling() {
-        //hitung jarak avg HIP ke salah satu HIP
-        const HIPRAscale0 = Math.abs(threeHIPAvg.lon - selectedStars[0].lon);
-        const HIPDEscale0 = Math.abs(threeHIPAvg.lat - selectedStars[0].lat);
-        const HIPRAscale1 = Math.abs(threeHIPAvg.lon - selectedStars[1].lon);
-        const HIPDEscale1 = Math.abs(threeHIPAvg.lat - selectedStars[1].lat);
-        const HIPRAscale2 = Math.abs(threeHIPAvg.lon - selectedStars[2].lon);
-        const HIPDEscale2 = Math.abs(threeHIPAvg.lat - selectedStars[2].lat);
-
-        const dHIPRA = (HIPRAscale0 + HIPRAscale1 + HIPRAscale2) / 3;
-        const dHIPDE = (HIPDEscale0 + HIPDEscale1 + HIPDEscale2) / 3;
-
-        //hitung jarak avg PIXEL ke salah satu pixel
-        const PixXscale0 = Math.abs(threePixelAvg.x - parseFloat(pixelCoordinates[0].split(' ')[0]));
-        const PixYscale0 = Math.abs(threePixelAvg.y - parseFloat(pixelCoordinates[0].split(' ')[1]));
-        const PixXscale1 = Math.abs(threePixelAvg.x - parseFloat(pixelCoordinates[1].split(' ')[0]));
-        const PixYscale1 = Math.abs(threePixelAvg.y - parseFloat(pixelCoordinates[1].split(' ')[1]));
-        const PixXscale2 = Math.abs(threePixelAvg.x - parseFloat(pixelCoordinates[2].split(' ')[0]));
-        const PixYscale2 = Math.abs(threePixelAvg.y - parseFloat(pixelCoordinates[2].split(' ')[1]));
-
-        const dPixX = (PixXscale0 + PixXscale1 + PixXscale2) / 3;
-        const dPixY = (PixYscale0 + PixYscale1 + PixYscale2) / 3;
-
-        //lalu bagi untuk dijadikan scale dari dimensi gambar
-        const scaleRA = dHIPRA/ dPixX;
-        const scaleDE = dHIPDE/ dPixY;
-        scales = {lon:scaleRA, lat:scaleDE};
-
-        console.log("SCALEs:",scales);
-        console.log("RA SCALE:",scaleRA);
-        console.log("DE SCALE:",scaleDE);
-        console.log("HIPRA:",dHIPRA);
-        console.log("HIPDE:",dHIPDE);
-        console.log("PIXRA:",dPixX);
-        console.log("PIXDE:",dPixY);
-
-    
-    }
 
 
 
@@ -2380,7 +2241,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         console.log(`Displaying mode ${mode}`);
         if(displaying_enabled) {
             document.getElementById('display-image').style.backgroundColor = 'orange';
-            addImageToPlot();
             document.getElementById('artwork-container').classList.remove('hidden');
 
             const opac = opacitySlider.value;
@@ -2528,14 +2388,7 @@ function initializePlot(lon, lat, text, size, ra, mag) {
                             [topRight[1], topRight[0]],      // NE
                             [bottomRight[1], bottomRight[0]], // SE
                             [bottomLeft[1], bottomLeft[0]]   // SW
-                        ],                    
-                        /*
-                        coordinates: [
-                            [bottomLeft[1], bottomLeft[0]],  // SW
-                            [bottomRight[1], bottomRight[0]], // SE
-                            [topRight[1], topRight[0]],      // NE
-                            [topLeft[1], topLeft[0]]        // NW
-                        ],*/
+                        ],   
                         opacity: opac,
                         below: "traces"  // Show below other data
                     }]
@@ -2554,7 +2407,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
         } else {
             document.getElementById('display-image').style.backgroundColor = 'white';
             document.getElementById('artwork-container').classList.add('hidden');
-            removeImageFromPlot();
             removeImagePlot();
         }
         const selectedLabel = document.getElementById('constellation-select').value;
@@ -2565,32 +2417,6 @@ function initializePlot(lon, lat, text, size, ra, mag) {
 
     });   
 
-    function addImageToPlot() {
-        const opac = opacitySlider.value;
-        console.log("Adding images to plot...");
-        const imageUrl = UploadedImage;
-        const imaLoc = { lon: threePixelAvg.lon, lat: threePixelAvg.lat};
-        const imageObject = {
-          source: imageUrl,
-          xref: "geo",
-          yref: "geo",
-          x: (imaLoc.lon + 180) / 360,  // Map lon to [0, 1] range (paper coordinates)
-          y: 1 - (imaLoc.lat + 90) / 180, // Map lat to [0, 1] range (paper coordinates)
-          sizex: 1,
-          sizey: 1,
-          xanchor: "center",
-          yanchor: "middle",
-          sizing: "contain",
-          opacity: opac,
-          layer: "above"
-        };
-        Plotly.relayout('plot', { images: [imageObject] });
-    };
-
-    function removeImageFromPlot() {
-        console.log("Removing images from plot...");
-        Plotly.relayout('plot', { images: [] });
-    };
 
     function removeImagePlot() {
         Plotly.purge('overlay-map');
@@ -2651,201 +2477,8 @@ function initializePlot(lon, lat, text, size, ra, mag) {
     });
 
     document.getElementById('display-artwork').addEventListener('click', () => {
-        const opac = opacitySlider.value;
-
-        const controlPoints = [
-            {lat: selectedStars[0].lat, lon: selectedStars[0].lon, imgX: parseFloat(pixelCoordinates[0].split(' ')[0]), imgY: parseFloat(pixelCoordinates[0].split(' ')[1])},
-            {lat: selectedStars[1].lat, lon: selectedStars[1].lon, imgX: parseFloat(pixelCoordinates[1].split(' ')[0]), imgY: parseFloat(pixelCoordinates[1].split(' ')[1])},
-            {lat: selectedStars[2].lat, lon: selectedStars[2].lon, imgX: parseFloat(pixelCoordinates[2].split(' ')[0]), imgY: parseFloat(pixelCoordinates[2].split(' ')[1])},
-        ]
-        function calculateTransform(points) {
-            const A = [
-                [points[0].imgX, points[0].imgY, 1, 0, 0, 0],
-                [0, 0, 0, points[0].imgX, points[0].imgY, 1],
-                [points[1].imgX, points[1].imgY, 1, 0, 0, 0],
-                [0, 0, 0, points[1].imgX, points[1].imgY, 1],
-                [points[2].imgX, points[2].imgY, 1, 0, 0, 0],
-                [0, 0, 0, points[2].imgX, points[2].imgY, 1]
-
-            ];
-            const B = [
-                points[0].lon,
-                points[0].lat,
-                points[1].lon,
-                points[1].lat,
-                points[2].lon,
-                points[2].lat
-            ];
-            // Solve the system A * X = B
-            function solve(A, B) {
-                const n = A.length;
-                
-                for (let i = 0; i < n; i++) {
-                    let maxEl = Math.abs(A[i][i]);
-                    let maxRow = i;
-                    for (let k = i + 1; k < n; k++) {
-                        if (Math.abs(A[k][i]) > maxEl) {
-                            maxEl = Math.abs(A[k][i]);
-                            maxRow = k;
-                        }
-                    }
-                    
-                    for (let k = i; k < n; k++) {
-                        const tmp = A[maxRow][k];
-                        A[maxRow][k] = A[i][k];
-                        A[i][k] = tmp;
-                    }
-                    const tmp = B[maxRow];
-                    B[maxRow] = B[i];
-                    B[i] = tmp;
-                    
-                    for (let k = i + 1; k < n; k++) {
-                        const c = -A[k][i] / A[i][i];
-                        for (let j = i; j < n; j++) {
-                            if (i === j) {
-                                A[k][j] = 0;
-                            } else {
-                                A[k][j] += c * A[i][j];
-                            }
-                        }
-                        B[k] += c * B[i];
-                    }
-                }
-                
-                const X = new Array(n);
-                for (let i = n - 1; i >= 0; i--) {
-                    X[i] = B[i] / A[i][i];
-                    for (let k = i - 1; k >= 0; k--) {
-                        B[k] -= A[k][i] * X[i];
-                    }
-                }
-                return X;
-            }
-            
-            const X = solve(A, B);
-            
-            return [
-                [X[0], X[1], X[2]],  // Row 1 (for lon)
-                [X[3], X[4], X[5]],  // Row 2 (for lat)
-                [0, 0, 1]            // Row 3 (homogeneous)
-            ];
-        }
-        const transformMatrix = calculateTransform(controlPoints);
-        // 3. Function to transform image coordinates to geographic coordinates 
-        function imageToMap(x, y) {
-            const vec = [x, y, 1];
-            const lon = transformMatrix[0][0] * vec[0] + transformMatrix[0][1] * vec[1] + transformMatrix[0][2] * vec[2];
-            const lat = transformMatrix[1][0] * vec[0] + transformMatrix[1][1] * vec[1] + transformMatrix[1][2] * vec[2];
-            return [lat, lon];
-        }
-        // 4. Calculate bounds for the overlay
-        const topLeft = imageToMap(0, 0);
-        const topRight = imageToMap(actualwidth, 0);
-        const bottomLeft = imageToMap(0, actualheight);
-        const bottomRight = imageToMap(actualwidth, actualheight);
-
-        // 5. Prepare Plotly data
-        const plotlyData = [            
-            // Image overlay
-            {
-                type: "scattermapbox",
-                mode: "markers",
-                lat: [topLeft[0], topRight[0], bottomRight[0], bottomLeft[0]],
-                lon: [topLeft[1], topRight[1], bottomRight[1], bottomLeft[1]],
-                marker: {
-                    size: 0  // Hide the markers
-                },
-                fill: "toself",
-                fillcolor: 'rgba(0,0,0,0)',
-                hoverinfo: "none",
-                showlegend: false
-            },
-            
-            // Control points
-            {
-                type: "scattermapbox",
-                mode: "markers+text",
-                lat: controlPoints.map(p => p.lat),
-                lon: controlPoints.map(p => p.lon),
-                textposition: "top right",
-                marker: {
-                    size: 12,
-                    color: 'red'
-                },
-                name: "Control Points",
-                hoverinfo: "text",
-                hovertext: controlPoints.map(p => `Image: (${p.imgX}, ${p.imgY})`)
-            }
-        ];
-        
-        // 6. Create the layout with the image overlay
-        const layout = {
-            mapbox: {
-                style: "white-bg",  // or use "white-bg" for no base map
-                center: {
-                    lat: controlPoints[0].lat,
-                    lon: controlPoints[0].lon
-                },
-                background: "#0D1130",
-                zoom: 14,
-                layers: [{
-                    sourcetype: "image",
-                    source: UploadedImage,  // Replace with your image URL
-                    coordinates: [
-                        [topLeft[1], topLeft[0]],      // NW
-                        [topRight[1], topRight[0]],      // NE
-                        [bottomRight[1], bottomRight[0]], // SE
-                        [bottomLeft[1], bottomLeft[0]]   // SW
-                    ],                    
-                    /*
-                    coordinates: [
-                        [bottomLeft[1], bottomLeft[0]],  // SW
-                        [bottomRight[1], bottomRight[0]], // SE
-                        [topRight[1], topRight[0]],      // NE
-                        [topLeft[1], topLeft[0]]        // NW
-                    ],*/
-                    opacity: opac,
-                    below: "traces"  // Show below other data
-                }]
-            },
-            margin: {"r":0,"t":0,"l":0,"b":0},
-            showlegend: false
-        };
-        
-        // 7. Create the Plotly map
-        Plotly.newPlot('overlay-map', plotlyData, layout);
-        
     });
 
-
-
-    function openPermission() {
-        document.getElementById('askPermission').style.display = 'block';
-    }
-    function closePermission() {
-        document.getElementById('askPermission').style.display = 'none';
-    }
-    document.querySelector('.close-permission').addEventListener('click', closePermission);
-    document.getElementById('ok-upload').addEventListener('click', function() {
-        const checkbox = document.getElementById('Checkbox');
-        if(checkbox.checked) {
-            localStorage.setItem('optPermission', 'true');
-        }
-        closePermission();
-    });
-    const optOutPermission = localStorage.getItem('optPermission');
-    if(!optOutPermission) {
-        window.onload = function() {
-            openPermission();
-        };
-    }
-    document.getElementById('Checkbox').addEventListener('change', function() {
-        if(this.checked) {
-            localStorage.setItem('optPermission', 'true');
-        } else {
-            localStorage.removeItem('optPermission');
-        }
-    });
 
     function openScroll() {
         document.getElementById('myScroll').style.display = 'block';
