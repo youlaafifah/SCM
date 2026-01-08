@@ -255,26 +255,11 @@ function initOverlays() {
         }
 
         const finalContent = contentParts.join('').trim() + '\n';
-        if(!window.appState.descriptionTab) {
-            window.appState.descriptionTab = window.open('');
-            window.appState.descriptionTab.document.write('<pre>' + escapeHtml(finalContent) + '</pre>');
-            window.appState.descriptionTab.document.title = 'Description.md - ' + window.culture.folderName;
-            window.appState.descriptionTab.document.close();
-        } else {
-            window.appState.descriptionTab.document.body.innerHTML = '<pre>' + escapeHtml(finalContent) + '</pre>';
-        }
-
         const textarea = document.getElementById('popupContent');
         textarea.textContent = finalContent + '\n\n ';
         popupdsc.style.display = 'block';
         
     };
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 
     document.getElementById('save-description').addEventListener('click', () => {
         generateDescription();

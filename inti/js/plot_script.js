@@ -130,13 +130,9 @@ async function loadAndRenderStars() {
         )
 
         window.appState = {
-            saveAsTab: null,
-            labelTab: null,
-            avgTab: null,
             vertexesTab: null, 
             insideTab: null,
-            coordTab: null,
-            descriptionTab: null,
+            descriptionTab: null
         }
 
         window.culture = {

@@ -128,10 +128,6 @@ function initFileManager() {
             }
             await openTextTab('Vertex.fab', 'vertexesTab', 'Vertex info');
             await openTextTab('Inside.fab', 'insideTab', 'Star Lists');
-            await openTextTab('constellationship.fab', 'saveAsTab', 'Stickfigure');
-            await openTextTab('constellation_names.fab', 'labelTab', 'Stickfigure Names');
-            await openTextTab('Mid_point.fab', 'avgTab', 'Midpoints');
-            await openTextTab('constellationsart.fab', 'coordTab', 'Artwork');
             async function openDescription() {
                 try{
                     const descHandle = await chosenFolderHandle.getFileHandle('description.md', { create: false });
@@ -408,52 +404,70 @@ install(DIRECTORY ./ DESTINATION \${SDATALOC}/skycultures/\${skyculture}
             alert("Please select a folder first using the 'Open Folder' button.");
             return;
         }
-        if(!window.appState.insideTab || window.appState.insideTab.closed) {
-            console.log("insideTab is closed, skip wikitable");
-        } else {
+        isInsideTabActive = window.appState.insideTab && !window.appState.insideTab.closed;
+        isVertexesTabActive = window.appState.vertexesTab && !window.appState.insideTab.closed;
+        let aseDirHandle = null;
+        if (isInsideTabActive || isVertexesTabActive) {
+            aseDirHandle = await chosenFolderHandle.getDirectoryHandle('ASE', {create: true});
+        } else {console.log("Both insideTab and vertexesTab are closed, skip creating ASE subfolder and processing tabs.");}
+        if(isInsideTabActive) {
             try {
                 const doc = window.appState.insideTab.document;
-                const tables = doc.querySelectorAll('table');
-                if (tables.length === 0) {
-                    console.log('Warning: No tables found in the review tab.');
-                    return;
+                const body = doc.body;
+                const childNodes = Array.from(body.childNodes);
+                let currentName = null;
+                for (let i = 0; i < childNodes.length; i++) {
+                    const node = childNodes[i];
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const match = node.textContent.trim().match(/^(.+) Infotable:/);
+                        if (match) {
+                            currentName = match[1].trim();
+                        }
+                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'TABLE' && currentName) {
+                        const output = tableToWiki(node);
+                        const fileName = `starlist_${currentName}.ase`;
+                        const fileHandle = await aseDirHandle.getFileHandle(fileName, { create: true });
+                        const stream = await fileHandle.createWritable();
+                        await stream.write(output);
+                        await stream.close();
+                        currentName = null;
+                    }
                 }
-                let output = '';
-                tables.forEach((t, idx) => {
-                    if (idx > 0) output += '\n';
-                    output += tableToWiki(t);
-                })
-                const WikiFileHandle = await chosenFolderHandle.getFileHandle('wikitable.ase', {create:true});
-                const WikiStream = await WikiFileHandle.createWritable();
-                await WikiStream.write(output);
-                await WikiStream.close();
+                if (!currentName && childNodes.length === 0) {
+                    console.log('Warning: No valid entries found in insideTab.');
+                }
             } catch (err) {
-                alert("error");
+                console.error('Error processing wikitable:', err);
             }
         }
-        if(!window.appState.vertexesTab || window.appState.vertexesTab.closed) {
-            console.log("vertexesTab is closed, skip infobox");
-        } else {
+        if(isVertexesTabActive) {
             try {
-                const tables = window.appState.vertexesTab.document.querySelectorAll('table');
-                if (tables.length === 0) {
-                    console.log('Warning: No tables found in the review tab.');
-                    return;
-                }
-                let output = '';
-                tables.forEach((t, idx) => {
-                    output += infoboxWiki(t);
-                    if (idx < tables.length - 1) {
-                        output += '\n\n';
+                const doc = window.appState.vertexesTab.document;
+                const body = doc.body;
+                const childNodes = Array.from(body.childNodes);
+                let currentName = null;
+                for (let i = 0; i < childNodes.length; i++) {
+                    const node = childNodes[i];
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const match = node.textContent.trim().match(/^(.+) Infobox:/);
+                        if (match) {
+                            currentName = match[1].trim();
+                        }
+                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'TABLE' && currentName) {
+                        const output = infoboxWiki(node);
+                        const fileName = `infobox_${currentName}.ase`;
+                        const fileHandle = await aseDirHandle.getFileHandle(fileName, { create: true });
+                        const stream = await fileHandle.createWritable();
+                        await stream.write(output);
+                        await stream.close();
+                        currentName = null;
                     }
-                })
-                const contentformat = output;
-                const InfoFileHandle = await chosenFolderHandle.getFileHandle('infobox.ase', { create: true });
-                const InfoStream = await InfoFileHandle.createWritable();
-                await InfoStream.write(contentformat);
-                await InfoStream.close();
+                }
+                if (!currentName && childNodes.length === 0) {
+                    console.log('Warning: No valid entries found in VertexesTab.');
+                }
             } catch (err) {
-                alert("error"+ err.message);
+                console.error("Error saving infobox files: " + err.message);
             }
         }
         try {
@@ -509,12 +523,8 @@ install(DIRECTORY ./ DESTINATION \${SDATALOC}/skycultures/\${skyculture}
                     console.warn(`Gagal menyimpan ${filename}:`, err.message);
                 }
             }
-            await saveTabContent('saveAsTab', 'constellationship.fab');
             await saveTabContent('vertexesTab', 'Vertex.fab');
             await saveTabContent('insideTab', 'Inside.fab');
-            await saveTabContent('labelTab', 'constellation_names.fab');
-            await saveTabContent('avgTab', 'Mid_point.fab');
-            await saveTabContent('coordTab', 'constellationsart.fab');
             await saveTabContent('descriptionTab', 'description.md')
 
         } catch (error) {

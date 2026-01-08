@@ -3,7 +3,7 @@ var drawing_enabled = false;
 var lines = [], stickFigure = [], traceIndices =[], constellationLines = [], fileContents = [];
 
 let selectedLineIndex = null, previousSelectedLineIndex = null; 
-
+let curX, curY, initX, initY;
 let constellationMidpoints = {};
 let selectedStars = [], selectedStarNames = [];
 let editModeStar = null;
@@ -484,6 +484,19 @@ function initConstellationTools() {
         starInputModeActive = false;
         const container = document.getElementById('manual-input-container');
         container.innerHTML = '';
+        const displaycontent = {
+            id: window.culture.folderName,
+            region: window.culture.regionName || "Unknown",
+            classification: [window.culture.classificationName || "Personal"],
+            fallback_to_international_names: false,
+            constellations: window.culture.constellationsList || [],
+            common_names: window.culture.commonNames || {},
+        };
+        apa = JSON.stringify(displaycontent,null,2);
+
+        Stelarea.textContent = apa + '\n\n';
+        Stelpopup.style.display = 'block';
+
     });
 
 //LABEL
@@ -498,7 +511,7 @@ function initConstellationTools() {
         document.getElementById('label-input').style.display = 'block';
         function adjustInput(inputWidth) {
             const placeholder = inputWidth.getAttribute('placeholder').length;
-            inputWidth.style.width = `${placeholder+1}ch`;
+            inputWidth.style.width = `${placeholder}ch`;
         }
         const inputs = document.querySelectorAll('input[type="text"]');
         inputs.forEach(adjustInput);
@@ -573,23 +586,6 @@ function initConstellationTools() {
         const labelPos2D = vectorToRaDec(labelPos3D);
 
         if (labelNative && labelNative.trim() !== '') {
-            if (!window.appState.labelTab) {
-                window.appState.labelTab = window.open();
-                window.appState.labelTab.document.write(`
-                    <html>
-                        <head>
-                            <title>Stickfigure Names</title>
-                        </head>
-                        <body>
-                            <pre>${labelContent}</pre>
-                        </body>
-                    </html>
-                    `);
-                window.appState.labelTab.document.close();
-            } else {
-                window.appState.labelTab.document.querySelector('pre').innerHTML += '\n' + labelContent;//window.appState.labelTab.document.body.innerHTML +='<pre>' + labelContent + '</pre>'; 
-            }
-
             if(labelPos3D) {    
                 const plotData = {
                     type:'scattergeo',
@@ -614,24 +610,7 @@ function initConstellationTools() {
                 const thelongitude = labelPos2D.visualRA;
                 const thelatitude = labelPos2D.decDeg;
 
-                const avgContent = `${labelnumber} "${labelNative}" ${thelongitude} ${thelatitude}`;
                 constellationLabels[labelNative] = {thelongitude,thelatitude,labelnumber};
-                if (!window.appState.avgTab) {
-                    window.appState.avgTab = window.open();
-                    window.appState.avgTab.document.write(`
-                        <html>
-                            <head>
-                                <title>Midpoints</title>
-                            </head>
-                            <body>
-                                <pre>${avgContent}</pre>
-                            </body>
-                        </html>
-                        `);
-                    window.appState.avgTab.document.close();    
-                } else {
-                    window.appState.avgTab.document.querySelector('pre').innerHTML += '\n' + avgContent;//window.appState.avgTab.document.body.innerHTML += '<pre>' + avgContent + '</pre>';
-                }
                 updateConstellationOptions();
             }
         };
@@ -706,7 +685,7 @@ function initConstellationTools() {
         if (!sudahAda) {
             window.culture.daftarkonstelasi.push(konstelasisekarang);
         } else {
-            console.warn("Konstelasi dengan entitas ini sudah ada, tidak ditambahkan ulang");
+            console.warn("Constellation with this id is already exist, not re-adding it");
         }
 
         nomor = `${formatNum(++SaveAsCount)}`;
@@ -976,9 +955,7 @@ function initConstellationTools() {
                 <tr><td>notes </td><td><!-- content --></td></tr>
             </tbody></table>`;
 
-        const convexhullkoordinat = hullRaDec.map(p => `{${p.visualRA},${p.decDeg}}`)
-        const vertexesContent = `${nomor} ${convexhullkoordinat}
-Infobox:
+        const vertexesContent = `${labelNative} Infobox:
 ${infobox}
 `;
 
@@ -990,7 +967,7 @@ ${infobox}
                         <title>Vertex info</title>
                     </head>
                     <body>
-                        <pre>${vertexesContent}</pre>
+                        ${vertexesContent}
                     </body>
                 </html>
                 `);
@@ -998,48 +975,23 @@ ${infobox}
 //            window.appState.vertexesTab.document.title = 'Vertexes HIP';
             window.appState.vertexesTab.document.close();
         } else {
-            window.appState.vertexesTab.document.querySelector('pre').innerHTML += '\n' + vertexesContent;//window.appState.vertexesTab.document.body.innerHTML +='<pre>' + vertexesContent + '</pre>';
+            window.appState.vertexesTab.document.body.innerHTML += '\n' + vertexesContent;
+            //window.appState.vertexesTab.document.body.innerHTML +='<pre>' + vertexesContent + '</pre>'; querySelector('pre')
         }
 
-        const insideContent = `
-CON ${nomor} 
-Infotable:
+        const insideContent = `${labelNative} Infotable:
 ${tableHTML}
         `;
 
         if(!window.appState.insideTab) {
             window.appState.insideTab = window.open();
-            window.appState.insideTab.document.write('<pre>' + insideContent + '</pre>');
+            window.appState.insideTab.document.write(insideContent); //'<pre>' + insideContent + '</pre>'
             window.appState.insideTab.document.title = 'Star Lists';
             window.appState.insideTab.document.close();
         } else {
-            window.appState.insideTab.document.body.innerHTML +='<pre>' + insideContent + '</pre>';
+            window.appState.insideTab.document.body.innerHTML += '\n' + insideContent;//'<pre>' + insideContent + '</pre>';
         }
         
-        const saveAsContent = `${nomor} ${stickFigure.length} ${fileContents}`;
-        if (!window.appState.saveAsTab) {
-            window.appState.saveAsTab = window.open();
-            window.appState.saveAsTab.document.write(`
-                <html>
-                    <head>
-                        <title>Stickfigure</title>
-                    </head>
-                    <body>
-                        <pre>${saveAsContent}</pre>
-                        <script>
-                            window.addEventListener('beforeunload', (event) => {
-                                const confirmationMessage = 'Are you sure you want to leave? Your changes may not be saved.';
-                                event.returnValue = confirmationMessage; // For most browsers
-                                return confirmationMessage; // For some browsers
-                            });
-                        <\/script>
-                    </body>
-                </html>
-                `);
-            window.appState.saveAsTab.document.close();
-        } else {
-            window.appState.saveAsTab.document.querySelector('pre').innerHTML += '\n' + saveAsContent;//window.appState.saveAsTab.document.body.innerHTML +='<pre>' + saveAsContent + '</pre>';
-        }
 
         stickFigure = [];
         constellationLines = [];
@@ -1049,8 +1001,47 @@ ${tableHTML}
         document.getElementById('pronounce').value = '';
         document.getElementById('ipa').value = '';
         document.getElementById('label-input').style.display = 'none';
+
+        const displaycontent = {
+            id: window.culture.folderName,
+            region: window.culture.regionName || "Unknown",
+            classification: [window.culture.classificationName || "Personal"],
+            fallback_to_international_names: false,
+            constellations: window.culture.constellationsList || [],
+            common_names: window.culture.commonNames || {},
+        };
+        apa = JSON.stringify(displaycontent,null,2);
+
+        Stelarea.textContent = apa + '\n\n';
+        Stelpopup.style.display = 'block';
         
     });
+    const Stelarea = document.getElementById('index-Content')
+    const Stelpopup = document.getElementById('popup-Stellarium');
+    const Stelheader = document.getElementById('popupHeader-Stellarium');
+    Stelheader.addEventListener('mousedown', dragstart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragend)
+    function dragstart (e) {
+        initX = e.clientX - Stelpopup.offsetLeft;
+        initY = e.clientY - Stelpopup.offsetTop;
+        isDragging = true;
+    }
+    function drag(e) {
+        if(isDragging) {
+            e.preventDefault();
+            curX = e.clientX - initX;
+            curY = e.clientY - initY;
+            Stelpopup.style.left = curX + 'px';
+            Stelpopup.style.top = curY + 'px';
+            Stelpopup.style.right = 'auto';
+        }
+    }
+    function dragend() { isDragging = false; }
+    document.getElementById('close-popupStel').addEventListener('click', function() {
+        console.log("klik")
+        Stelpopup.style.display = 'none';
+    })
 
 
 // IMAGES DEALING
@@ -1233,7 +1224,7 @@ ${tableHTML}
             let RAtotal = 0;
             let DEtotal = 0;
 
-            if(window.appState.vertexesTab && !window.appState.vertexesTab.closed) {
+/*            if(window.appState.vertexesTab && !window.appState.vertexesTab.closed) {
                 const vertexesContent = window.appState.vertexesTab.document.body.innerText;
                 const readVertexesLines = vertexesContent.trim().split('\n');
                 const listofHIP = {};
@@ -1286,7 +1277,7 @@ ${tableHTML}
                         DEtotal = (DEmax - DEmin); 
                     }
                 } 
-            }
+            }*/
 
             if (position) {
                 const avgLon = position.avgLon || position.firstLon;
@@ -1564,14 +1555,6 @@ ${tableHTML}
         }
 
         const coordContent = `${number} ${picture} ${pixelCoordinates[0]} ${selectedStarNames[0]} ${pixelCoordinates[1]} ${selectedStarNames[1]} ${pixelCoordinates[2]} ${selectedStarNames[2]}`;
-        if (!window.appState.coordTab) {
-            window.appState.coordTab = window.open();
-            window.appState.coordTab.document.write('<pre>' + coordContent + '</pre>');
-            window.appState.coordTab.document.title = "Constellation Artwork";
-            window.appState.coordTab.document.close();        
-        } else {
-            window.appState.coordTab.document.querySelector('pre').innerHTML += '\n' + coordContent;//window.appState.coordTab.document.body.innerHTML += '<pre>' + coordContent + '</pre>';
-        }
         const lonRange = [-360, 0];
         const latRange = [-90, 90];        
 
