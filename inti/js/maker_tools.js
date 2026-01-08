@@ -955,7 +955,7 @@ function initConstellationTools() {
                 <tr><td>notes </td><td><!-- content --></td></tr>
             </tbody></table>`;
 
-        const vertexesContent = `${labelNative} Infobox:
+        const vertexesContent = `${labelTranslated} Infobox:
 ${infobox}
 `;
 
@@ -979,7 +979,7 @@ ${infobox}
             //window.appState.vertexesTab.document.body.innerHTML +='<pre>' + vertexesContent + '</pre>'; querySelector('pre')
         }
 
-        const insideContent = `${labelNative} Infotable:
+        const insideContent = `${labelTranslated} Infotable:
 ${tableHTML}
         `;
 
